@@ -65,8 +65,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         VirtualJoystickNode {
             dead_zone: 0.,
             id: JoystickController::MovementX,
-            axis: VirtualJoystickAxis::Horizontal,
-            behaviour: VirtualJoystickType::Fixed,
+            behaviour: (AxisHoritonalOnly, StickFixed),
         },
         Style {
             width: Val::Px(150.),
@@ -91,8 +90,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         VirtualJoystickNode {
             dead_zone: 0.,
             id: JoystickController::MovementY,
-            axis: VirtualJoystickAxis::Vertical,
-            behaviour: VirtualJoystickType::Fixed,
+            behaviour: (AxisVerticalOnly, StickFixed),
         },
         Style {
             width: Val::Px(150.),

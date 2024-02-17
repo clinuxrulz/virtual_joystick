@@ -57,8 +57,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         let joystick_node = VirtualJoystickNode {
             dead_zone: 0.,
             id: "UniqueJoystick".to_string(),
-            axis: VirtualJoystickAxis::Both,
-            behaviour: VirtualJoystickType::Floating,
+            behaviour: (AxisBoth, StickFloating),
         };
         let joystick_node_style = Style {
             width: Val::Percent(100.0), // <-- or 50% to use 1/2 screen

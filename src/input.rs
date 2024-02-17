@@ -4,10 +4,9 @@ use bevy::{
     window::PrimaryWindow,
 };
 
-use crate::VirtualJoystickID;
+use crate::{behaviour::Behaviour, VirtualJoystickID};
 use crate::{
     ui::VirtualJoystickData, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickNode,
-    VirtualJoystickType,
 };
 
 #[derive(Event)]
@@ -24,11 +23,11 @@ fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
     false
 }
 
-pub fn update_input<S: VirtualJoystickID>(
+pub fn update_input<S: VirtualJoystickID, B: Behaviour>(
     mut input_events: EventReader<InputEvent>,
-    mut send_values: EventWriter<VirtualJoystickEvent<S>>,
+    mut send_values: EventWriter<VirtualJoystickEvent<S, B>>,
     mut joysticks: Query<(
-        &VirtualJoystickNode<S>,
+        &VirtualJoystickNode<S, B>,
         &Visibility,
         &InheritedVisibility,
         &ViewVisibility,
@@ -65,7 +64,7 @@ pub fn update_input<S: VirtualJoystickID>(
                             event: VirtualJoystickEventType::Press,
                             value: Vec2::ZERO,
                             delta: Vec2::ZERO,
-                            axis: node.axis,
+                            behavour: node.behaviour.clone(),
                         });
                     }
                 }
@@ -80,15 +79,11 @@ pub fn update_input<S: VirtualJoystickID>(
                     }
                     knob.current_pos = *pos;
                     let half = knob.interactable_zone_rect.half_size();
-                    if node.behaviour == VirtualJoystickType::Dynamic {
-                        knob.base_pos = *pos;
-                        let to_knob = knob.current_pos - knob.start_pos;
-                        let distance_to_knob = to_knob.length();
-                        if distance_to_knob > half.x {
-                            let excess_distance = distance_to_knob - half.x;
-                            knob.start_pos += to_knob.normalize() * excess_distance;
-                        }
-                    }
+                    let mut knob_base_pos = knob.base_pos;
+                    let mut knob_start_pos = knob.start_pos;
+                    node.behaviour.dragging(*pos, half, &mut knob_base_pos, &mut knob_start_pos, knob.current_pos);
+                    knob.base_pos = knob_base_pos;
+                    knob.start_pos = knob_start_pos;
                     let d = (knob.start_pos - knob.current_pos) / half;
                     knob.delta = Vec2::new(
                         d.x.signum() * d.x.abs().min(1.),
@@ -119,7 +114,7 @@ pub fn update_input<S: VirtualJoystickID>(
                         event: VirtualJoystickEventType::Up,
                         value: Vec2::ZERO,
                         delta: Vec2::ZERO,
-                        axis: node.axis,
+                        behavour: node.behaviour.clone(),
                     });
                 }
             }
@@ -132,9 +127,9 @@ pub fn update_input<S: VirtualJoystickID>(
             send_values.send(VirtualJoystickEvent {
                 id: node.id.clone(),
                 event: VirtualJoystickEventType::Drag,
-                value: node.axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
-                delta: node.axis.handle_xy(-knob.delta.x, knob.delta.y),
-                axis: node.axis,
+                value: node.behaviour.project_to_axis(Vec2::new(-knob.current_pos.x, knob.current_pos.y)),
+                delta: node.behaviour.project_to_axis(Vec2::new(-knob.delta.x, knob.delta.y)),
+                behavour: node.behaviour.clone(),
             });
         }
     }

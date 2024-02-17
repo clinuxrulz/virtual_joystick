@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickInteractionArea, VirtualJoystickNode,
-    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+    Behaviour, VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickInteractionArea, VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob
 };
 
 /// This function is a simple helper to create a joystick
@@ -97,7 +96,7 @@ use crate::{
 /// });
 /// ```
 #[allow(clippy::too_many_arguments)]
-pub fn create_joystick<I: VirtualJoystickID>(
+pub fn create_joystick<I: VirtualJoystickID, B: Behaviour>(
     cmd: &mut Commands,
     knob_img: Handle<Image>,
     background_img: Handle<Image>,
@@ -106,7 +105,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
     interactable_area_color: Option<Color>,
     knob_size: Vec2,
     background_size: Vec2,
-    joystick_node: VirtualJoystickNode<I>,
+    joystick_node: VirtualJoystickNode<I, B>,
     joystick_node_style: Style,
 ) {
     let mut spawn =

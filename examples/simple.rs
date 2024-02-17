@@ -7,7 +7,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(VirtualJoystickPlugin::<String>::default())
+        .add_plugins(VirtualJoystickPlugin::<String,(AxisBoth, StickFloating)>::default())
         .add_systems(Startup, create_scene)
         .add_systems(Update, update_joystick)
         .run();
@@ -51,8 +51,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         VirtualJoystickNode {
             dead_zone: 0.,
             id: "UniqueJoystick".to_string(),
-            axis: VirtualJoystickAxis::Both,
-            behaviour: VirtualJoystickType::Floating,
+            behaviour: (AxisBoth, StickFloating),
         },
         Style {
             width: Val::Px(150.),
@@ -66,7 +65,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_joystick(
-    mut joystick: EventReader<VirtualJoystickEvent<String>>,
+    mut joystick: EventReader<VirtualJoystickEvent<String,(AxisBoth, StickFloating)>>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {

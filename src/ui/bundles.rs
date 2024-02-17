@@ -3,7 +3,7 @@ use bevy::{prelude::*, ui::RelativeCursorPosition};
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
 
-use crate::{VirtualJoystickAxis, VirtualJoystickID, VirtualJoystickType};
+use crate::{behaviour::Behaviour, VirtualJoystickID};
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -24,13 +24,13 @@ pub struct VirtualJoystickUIKnob;
 pub struct VirtualJoystickUIBackground;
 
 #[derive(Bundle, Debug, Default)]
-pub struct VirtualJoystickBundle<S: VirtualJoystickID> {
+pub struct VirtualJoystickBundle<S: VirtualJoystickID, B: Behaviour> {
     /// Describes the size of the node
     pub(crate) node: Node,
     /// Describes the style including flexbox settings
     pub(crate) style: Style,
     /// The texture atlas image of the node
-    pub(crate) joystick: VirtualJoystickNode<S>,
+    pub(crate) joystick: VirtualJoystickNode<S, B>,
     /// The transform of the node
     pub(crate) transform: Transform,
     /// The global transform of the node
@@ -49,15 +49,13 @@ pub struct VirtualJoystickBundle<S: VirtualJoystickID> {
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-pub struct VirtualJoystickNode<S: VirtualJoystickID> {
+pub struct VirtualJoystickNode<S: VirtualJoystickID, B: Behaviour> {
     /// Identifier of joystick
     pub id: S,
     /// Zone to ignore movement
     pub dead_zone: f32,
-    /// Define Axis for this joystick
-    pub axis: VirtualJoystickAxis,
     /// Define the behaviour of joystick
-    pub behaviour: VirtualJoystickType,
+    pub behaviour: B,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
@@ -76,8 +74,8 @@ pub struct VirtualJoystickData {
     pub current_iteraction_is_mouse: Option<bool>,
 }
 
-impl<S: VirtualJoystickID> VirtualJoystickBundle<S> {
-    pub fn new(joystick: VirtualJoystickNode<S>) -> Self {
+impl<S: VirtualJoystickID, B: Behaviour> VirtualJoystickBundle<S, B> {
+    pub fn new(joystick: VirtualJoystickNode<S, B>) -> Self {
         Self {
             joystick,
             ..default()
