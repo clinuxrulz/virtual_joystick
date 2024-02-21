@@ -8,15 +8,16 @@ use bevy::{
 };
 
 mod behaviour;
+mod components;
 mod input;
+mod systems;
 mod ui;
 mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 use input::{update_input, update_joystick, update_joystick_by_mouse, InputEvent};
-pub use ui::{
-    VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
-    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+pub use components::{
+    JoystickState, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
 };
 pub use utils::create_joystick;
 
