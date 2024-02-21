@@ -105,6 +105,9 @@ pub fn update_floating(
             } else {
                 base_offset = joystick_state.base_offset;
             }
+        } else if joystick_state.just_released {
+            base_offset = Vec2::ZERO;
+            assign_base_offset = true;
         } else {
             base_offset = joystick_state.base_offset;
         }
