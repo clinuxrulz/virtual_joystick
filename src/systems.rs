@@ -3,12 +3,12 @@ use bevy::{ecs::{query::With, system::{Query, Res}}, hierarchy::Children, input:
 use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickHorizontalOnly, JoystickState, JoystickVerticalOnly};
 
 pub fn update_input(
-    mut joysticks: Query<(&Node, &GlobalTransform, &mut JoystickState, &Children)>,
+    mut joysticks: Query<(&Node, &GlobalTransform, &mut JoystickState)>,
     mouse_buttons: Res<Input<MouseButton>>,
     touches: Res<Touches>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state, joystick_children) in &mut joysticks {
+    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
         if joystick_state.touch_state.is_none() {
             let rect = joystick_node.logical_rect(joystick_global_transform);
             for touch in touches.iter() {

@@ -16,10 +16,10 @@ pub struct VirtualJoystickUIBackground;
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct JoystickState {
+    pub touch_state: Option<TouchState>,
     pub base_pos: Vec2,
     pub knob_pos: Vec2,
     pub delta: Vec2,
-    pub touch_state: Option<TouchState>,
 }
 
 #[derive(Clone, Debug, Default, Reflect)]
