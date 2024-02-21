@@ -54,12 +54,6 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         let interactable_area_color = None;
         let knob_size = Vec2::new(75., 75.);
         let background_size = Vec2::new(JOYSTICK_BACKGROUND_SIZE, JOYSTICK_BACKGROUND_SIZE);
-        let joystick_node = VirtualJoystickNode {
-            dead_zone: 0.,
-            id: "UniqueJoystick".to_string(),
-            axis: VirtualJoystickAxis::Both,
-            behaviour: VirtualJoystickType::Floating,
-        };
         let joystick_node_style = Style {
             width: Val::Percent(100.0), // <-- or 50% to use 1/2 screen
             height: Val::Percent(100.0),
@@ -69,8 +63,9 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         };
         let mut spawn = cmd.spawn((
-            VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style),
+            VirtualJoystickBundle::new(VirtualJoystickNode::default()).set_style(joystick_node_style),
             InvisibleJoystick,
+            JoystickFloating,
         ));
         let spawn = spawn
             .insert(VirtualJoystickInteractionArea)

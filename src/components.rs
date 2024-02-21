@@ -25,6 +25,13 @@ pub struct VirtualJoystickNode<S: VirtualJoystickID> {
     pub delta: Vec2,
 }
 
+impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
+    pub fn with_id(mut self, id: S) -> Self {
+        self.id = id;
+        self
+    }
+}
+
 #[derive(Clone, Debug, Default, Reflect)]
 #[reflect(Default)]
 pub struct TouchState {

@@ -99,6 +99,7 @@ use crate::{
 #[allow(clippy::too_many_arguments)]
 pub fn create_joystick<I: VirtualJoystickID>(
     cmd: &mut Commands,
+    id: I,
     knob_img: Handle<Image>,
     background_img: Handle<Image>,
     knob_color: Option<Color>,
@@ -110,7 +111,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
     behaviour_components: impl Bundle,
 ) {
     let mut spawn =
-        cmd.spawn((VirtualJoystickBundle::new(VirtualJoystickNode::<I>::default()).set_style(joystick_node_style), behaviour_components));
+        cmd.spawn((VirtualJoystickBundle::new(VirtualJoystickNode::<I>::default().with_id(id)).set_style(joystick_node_style), behaviour_components));
     let spawn = spawn
         .with_children(|parent| {
             parent.spawn((
