@@ -4,13 +4,11 @@ use bevy::{
     ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath, render::RenderApp, ui::RenderUiSystem
 };
 
-mod behaviour;
 mod bundles;
 mod components;
 mod systems;
 mod utils;
 
-pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
     VirtualJoystickNode, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
@@ -54,8 +52,6 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app
             .register_type::<VirtualJoystickNode<S>>()
-            .register_type::<VirtualJoystickAxis>()
-            .register_type::<VirtualJoystickType>()
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()

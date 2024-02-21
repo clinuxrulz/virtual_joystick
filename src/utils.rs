@@ -106,12 +106,11 @@ pub fn create_joystick<I: VirtualJoystickID>(
     interactable_area_color: Option<Color>,
     knob_size: Vec2,
     background_size: Vec2,
-    joystick_node: VirtualJoystickNode<I>,
     joystick_node_style: Style,
-    behaviour_components: impl Bundle
+    behaviour_components: impl Bundle,
 ) {
     let mut spawn =
-        cmd.spawn((VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style), behaviour_components));
+        cmd.spawn((VirtualJoystickBundle::new(VirtualJoystickNode::<I>::default()).set_style(joystick_node_style), behaviour_components));
     let spawn = spawn
         .with_children(|parent| {
             parent.spawn((
