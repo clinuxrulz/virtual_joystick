@@ -200,7 +200,31 @@ pub fn update_vertical_only(mut joystick: Query<&mut JoystickState, With<Joystic
 }
 
 pub fn update_ui(
-    mut joysticks: Query<&JoystickState, &Children>
+    joysticks: Query<(&Node, &JoystickState, &GlobalTransform, &Children)>,
+    mut joystick_bases: Query<&mut Style, With<VirtualJoystickUIBackground>>,
+    mut joystick_knobs: Query<(&mut Style, &Node, &GlobalTransform), With<VirtualJoystickUIKnob>>,
 ) {
-    
+    for (joystick_node, joystick_state, joystick_global_transform, children) in &joysticks {
+        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+        for child in children.iter() {
+            if joystick_bases.contains(child) {
+                let joystick_base = joystick_bases.get_mut(child).unwrap();
+                joystick_base.left = Val::Px(joystick_rect.min.x + joystick_state.base_offset.x);
+                joystick_base.top = Val::Px(joystick_rect.min.y + joystick_state.base_offset.y);
+            }
+        }
+        for child in children.iter() {
+            if joystick_knobs.contains(child) {
+                let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) = joystick_knobs.get_mut(child).unwrap();
+                let joystick_knob_rect = joystick_node.logical_rect(joystick_knob_global_transform);
+                let joystick_knob_half_size = joystick_knob_rect.half_size();
+                joystick_knob_style.left = Val::Px(
+                    joystick_rect.center().x + (joystick_state.delta.x - 1) * joystick_knob_half_size.x
+                );
+                joystick_knob_style.top = Val::Px(
+                    joystick_rect.centre().y + (-joystick_state.delta.y - 1) * joystick_knob_half_size.y
+                );
+            }
+        }
+    }
 }

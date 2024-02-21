@@ -70,8 +70,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                     update_horizontal_only,
                     update_vertical_only,
                 )
-            )
-            .add_system(UpdateUI, update_ui);
+            );
 
         let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
             return;
