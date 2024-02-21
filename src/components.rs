@@ -17,8 +17,8 @@ pub struct VirtualJoystickUIBackground;
 #[reflect(Component, Default)]
 pub struct JoystickState {
     pub touch_state: Option<TouchState>,
-    pub base_pos: Vec2,
-    pub knob_pos: Vec2,
+    pub just_released: bool,
+    pub base_offset: Vec2,
     pub delta: Vec2,
 }
 
@@ -29,6 +29,7 @@ pub struct TouchState {
     pub is_mouse: bool,
     pub start: Vec2,
     pub current: Vec2,
+    pub just_pressed: bool,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]

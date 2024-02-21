@@ -1,6 +1,6 @@
-use bevy::{ecs::{query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::Node, window::{PrimaryWindow, Window}};
+use bevy::{ecs::{query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
 
-use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickHorizontalOnly, JoystickState, JoystickVerticalOnly};
+use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickState, JoystickVerticalOnly};
 
 pub fn update_input(
     mut joysticks: Query<(&Node, &GlobalTransform, &mut JoystickState)>,
@@ -9,6 +9,10 @@ pub fn update_input(
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
+        joystick_state.just_released = false;
+        if let Some(touch_state) = &mut joystick_state.touch_state {
+            touch_state.just_pressed = false;
+        }
         if joystick_state.touch_state.is_none() {
             let rect = joystick_node.logical_rect(joystick_global_transform);
             for touch in touches.iter() {
@@ -18,6 +22,7 @@ pub fn update_input(
                         is_mouse: false,
                         start: touch.position(),
                         current: touch.position(),
+                        just_pressed: true,
                     });
                     break;
                 }
@@ -31,6 +36,7 @@ pub fn update_input(
                                 is_mouse: true,
                                 start: mouse_pos,
                                 current: mouse_pos,
+                                just_pressed: true,
                             });
                         }
                     }
@@ -51,6 +57,7 @@ pub fn update_input(
             }
             if clear_touch_state {
                 joystick_state.touch_state = None;
+                joystick_state.just_released = true;
             } else {
                 if let Some(touch_state) = &mut joystick_state.touch_state {
                     if touch_state.is_mouse {
@@ -66,7 +73,25 @@ pub fn update_input(
     }
 }
 
-pub fn update_fixed(mut joystick: Query<&mut JoystickState, With<JoystickFixed>>) {
+pub fn update_fixed(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFixed>>,
+) {
+    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
+        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+        joystick_state.base_offset = Vec2::ZERO;
+        let new_delta: Vec2;
+        if let Some(touch_state) = &joystick_state.touch_state {
+            new_delta = (touch_state.current - joystick_rect.center()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+        } else {
+            new_delta = Vec2::ZERO;
+        }
+        joystick_state.delta = new_delta;
+    }
+}
+
+pub fn update_floating(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFloating>>,
+) {
 
 }
 
