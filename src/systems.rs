@@ -4,8 +4,6 @@ use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystic
 
 pub fn update_input(
     mut joysticks: Query<(&Node, &GlobalTransform, &mut JoystickState, &Children)>,
-    mut joystick_bases: Query<(&Node, &VirtualJoystickUIBackground)>,
-    mut joystick_knobs: Query<&VirtualJoystickUIKnob>,
     mouse_buttons: Res<Input<MouseButton>>,
     touches: Res<Touches>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
@@ -68,6 +66,10 @@ pub fn update_input(
     }
 }
 
+pub fn update_fixed(mut joystick: Query<&mut JoystickState, With<JoystickFixed>>) {
+
+}
+
 pub fn update_dead_zone(mut joystick: Query<(&JoystickDeadZone, &mut JoystickState)>) {
     for (joystick_dead_zone, mut joystick_state) in &mut joystick {
         let dead_zone = joystick_dead_zone.0;
@@ -92,8 +94,4 @@ pub fn update_vertical_only(mut joystick: Query<&mut JoystickState, With<Joystic
         joystick_state.knob_pos = joystick_state.base_pos + Vec2::new(0.0, joystick_state.knob_pos.y - joystick_state.base_pos.y);
         joystick_state.delta.x = 0.0;
     }
-}
-
-pub fn update_fixed(mut joystick: Query<&mut JoystickState, With<JoystickFixed>>) {
-
 }
