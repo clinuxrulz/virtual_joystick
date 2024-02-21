@@ -15,7 +15,7 @@ pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 pub use components::{
     VirtualJoystick, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
 };
-use systems::{update_dead_zone, update_dynamic, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
+use systems::{update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
 pub use utils::create_joystick;
 
 use ui::{extract_joystick_node, VirtualJoystickData};
@@ -26,6 +26,9 @@ pub struct UpdateKnobDelta;
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ConstrainKnobDelta;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct FireEvents;
 
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
@@ -62,6 +65,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .add_event::<InputEvent>()
             .add_stage_before(Update, UpdateKnobDelta)
             .add_stage_after(UpdateKnobDelta, ConstrainKnobDelta)
+            .add_state_after(ConstrainKnobDelta, FireEvents)
             .add_systems(PreUpdate, update_input)
             .add_systems(
                 UpdateKnobDelta,
@@ -78,7 +82,8 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                     update_horizontal_only::<S>,
                     update_vertical_only::<S>,
                 )
-            );
+            )
+            .add_systems(FireEvents, update_fire_events::<S>);
 
         let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
             return;
@@ -105,7 +110,6 @@ pub struct VirtualJoystickEvent<S: VirtualJoystickID> {
     event: VirtualJoystickEventType,
     value: Vec2,
     delta: Vec2,
-    axis: VirtualJoystickAxis,
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {

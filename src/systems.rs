@@ -1,6 +1,6 @@
-use bevy::{ecs::{query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
+use bevy::{ecs::{event::EventWriter, query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
 
-use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, VirtualJoystick, JoystickVerticalOnly, VirtualJoystickID};
+use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickVerticalOnly, VirtualJoystick, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID};
 
 pub fn update_input<S: VirtualJoystickID>(
     mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystick<S>)>,
@@ -12,6 +12,7 @@ pub fn update_input<S: VirtualJoystickID>(
         joystick_state.just_released = false;
         if let Some(touch_state) = &mut joystick_state.touch_state {
             touch_state.just_pressed = false;
+            touch_state.just_dragged = false;
         }
         if joystick_state.touch_state.is_none() {
             let rect = joystick_node.logical_rect(joystick_global_transform);
@@ -23,6 +24,7 @@ pub fn update_input<S: VirtualJoystickID>(
                         start: touch.position(),
                         current: touch.position(),
                         just_pressed: true,
+                        just_dragged: false,
                     });
                     break;
                 }
@@ -37,6 +39,7 @@ pub fn update_input<S: VirtualJoystickID>(
                                 start: mouse_pos,
                                 current: mouse_pos,
                                 just_pressed: true,
+                                just_dragged: false,
                             });
                         }
                     }
@@ -61,10 +64,18 @@ pub fn update_input<S: VirtualJoystickID>(
             } else {
                 if let Some(touch_state) = &mut joystick_state.touch_state {
                     if touch_state.is_mouse {
-                        touch_state.current = q_windows.single().cursor_position();
+                        let new_current = q_windows.single().cursor_position().unwrap();
+                        if new_current != touch_state.current {
+                            touch_state.current = new_current;
+                            touch_state.just_dragged = true;
+                        }
                     } else {
                         if let Some(touch) = touches.get_pressed(touch_state.id) {
-                            touch_state.current = touch.position();
+                            let touch_position = touch.position();
+                            if touch_position != touch_state.current {
+                                touch_state.current = touch_position;
+                                touch_state.just_dragged = true;
+                            }
                         }
                     }
                 }
@@ -196,6 +207,40 @@ pub fn update_vertical_only<S: VirtualJoystickID>(mut joystick: Query<&mut Virtu
     for mut joystick_state in &mut joystick {
         joystick_state.knob_pos = joystick_state.base_pos + Vec2::new(0.0, joystick_state.knob_pos.y - joystick_state.base_pos.y);
         joystick_state.delta.x = 0.0;
+    }
+}
+
+pub fn update_fire_events<S: VirtualJoystickID>(
+    joysticks: Query<&VirtualJoystick<S>>,
+    mut send_values: EventWriter<VirtualJoystickEvent<S>>,
+) {
+    for joystick in &joysticks {
+        if let Some(touch_state) = &joystick.touch_state {
+            if touch_state.just_pressed {
+                send_values.send(VirtualJoystickEvent {
+                    id: joystick.id.clone(),
+                    event: VirtualJoystickEventType::Press,
+                    value: touch_state.current,
+                    delta: joystick.delta,
+                });
+            }
+            if touch_state.just_dragged {
+                send_values.send(VirtualJoystickEvent {
+                    id: joystick.id.clone(),
+                    event: VirtualJoystickEventType::Drag,
+                    value: touch_state.current,
+                    delta: joystick.delta,
+                });
+            }
+        }
+        if joystick.just_released {
+            send_values.send(VirtualJoystickEvent {
+                id: joystick.id.clone(),
+                event: VirtualJoystickEventType::Up,
+                value: Vec2::ZERO,
+                delta: joystick.delta,
+            });
+        }
     }
 }
 

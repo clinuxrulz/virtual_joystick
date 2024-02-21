@@ -33,6 +33,7 @@ pub struct TouchState {
     pub start: Vec2,
     pub current: Vec2,
     pub just_pressed: bool,
+    pub just_dragged: bool,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
