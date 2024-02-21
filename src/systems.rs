@@ -94,7 +94,33 @@ pub fn update_fixed(
 pub fn update_floating(
     mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFloating>>,
 ) {
-
+    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
+        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+        let base_offset: Vec2;
+        let mut assign_base_offset = false;
+        if let Some(touch_state) = &joystick_state.touch_state {
+            if touch_state.just_pressed {
+                base_offset = touch_state.start - joystick_rect.center();
+                assign_base_offset = true;
+            } else {
+                base_offset = joystick_state.base_offset;
+            }
+        } else {
+            base_offset = joystick_state.base_offset;
+        }
+        if assign_base_offset {
+            joystick_state.base_offset = base_offset;
+        }
+        let new_delta: Vec2;
+        if let Some(touch_state) = &joystick_state.touch_state {
+            let mut new_delta2 = ((touch_state.current - (joystick_rect.center() + base_offset)) / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            new_delta2.y = -new_delta2.y;
+            new_delta = new_delta2;
+        } else {
+            new_delta = Vec2::ZERO;
+        }
+        joystick_state.delta = new_delta;
+    }
 }
 
 pub fn update_dead_zone(mut joystick: Query<(&JoystickDeadZone, &mut JoystickState)>) {
