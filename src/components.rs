@@ -1,5 +1,7 @@
 use bevy::{ecs::{component::Component, reflect::ReflectComponent}, prelude::Vec2, reflect::{std_traits::ReflectDefault, Reflect}};
 
+use crate::VirtualJoystickID;
+
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
@@ -15,7 +17,8 @@ pub struct VirtualJoystickUIBackground;
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-pub struct JoystickState {
+pub struct VirtualJoystick<S: VirtualJoystickID> {
+    pub id: S,
     pub touch_state: Option<TouchState>,
     pub just_released: bool,
     pub base_offset: Vec2,

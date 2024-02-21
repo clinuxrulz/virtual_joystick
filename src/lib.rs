@@ -13,7 +13,7 @@ mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 pub use components::{
-    JoystickState, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
+    VirtualJoystick, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
 };
 use systems::{update_dead_zone, update_dynamic, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
 pub use utils::create_joystick;
@@ -32,6 +32,13 @@ pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
 }
 
+#[derive(Event)]
+pub enum InputEvent {
+    StartDrag { id: u64, pos: Vec2, is_mouse: bool },
+    Dragging { id: u64, pos: Vec2, is_mouse: bool },
+    EndDrag { id: u64, pos: Vec2, is_mouse: bool },
+}
+
 pub trait VirtualJoystickID:
     Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static
 {
@@ -46,6 +53,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<VirtualJoystickInteractionArea>()
             .register_type::<VirtualJoystickNode<S>>()
+            .register_type::<VirtualJoystick<S>>()
             .register_type::<VirtualJoystickData>()
             .register_type::<VirtualJoystickAxis>()
             .register_type::<VirtualJoystickType>()
@@ -58,17 +66,17 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .add_systems(
                 UpdateKnobDelta,
                 (
-                    update_fixed,
-                    update_floating,
-                    update_dynamic,
+                    update_fixed::<S>,
+                    update_floating::<S>,
+                    update_dynamic::<S>,
                 )
             )
             .add_systems(
                 ConstrainKnobDelta,
                 (
-                    update_dead_zone,
-                    update_horizontal_only,
-                    update_vertical_only,
+                    update_dead_zone::<S>,
+                    update_horizontal_only::<S>,
+                    update_vertical_only::<S>,
                 )
             );
 
@@ -77,7 +85,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
         };
         render_app.add_systems(
             ExtractSchedule,
-            update_ui.after(RenderUiSystem::ExtractNode),
+            update_ui::<S>.after(RenderUiSystem::ExtractNode),
         );
     }
 }

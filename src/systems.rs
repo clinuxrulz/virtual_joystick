@@ -1,9 +1,9 @@
 use bevy::{ecs::{query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
 
-use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickState, JoystickVerticalOnly};
+use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, VirtualJoystick, JoystickVerticalOnly, VirtualJoystickID};
 
-pub fn update_input(
-    mut joysticks: Query<(&Node, &GlobalTransform, &mut JoystickState)>,
+pub fn update_input<S: VirtualJoystickID>(
+    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystick<S>)>,
     mouse_buttons: Res<Input<MouseButton>>,
     touches: Res<Touches>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
@@ -73,8 +73,8 @@ pub fn update_input(
     }
 }
 
-pub fn update_fixed(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFixed>>,
+pub fn update_fixed<S: VirtualJoystickID>(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystick<S>), With<JoystickFixed>>,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -91,8 +91,8 @@ pub fn update_fixed(
     }
 }
 
-pub fn update_floating(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFloating>>,
+pub fn update_floating<S: VirtualJoystickID>(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystick<S>), With<JoystickFloating>>,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -126,8 +126,8 @@ pub fn update_floating(
     }
 }
 
-pub fn update_dynamic(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFloating>>,
+pub fn update_dynamic<S: VirtualJoystickID>(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystick<S>), With<JoystickFloating>>,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -173,7 +173,7 @@ pub fn update_dynamic(
     }
 }
 
-pub fn update_dead_zone(mut joystick: Query<(&JoystickDeadZone, &mut JoystickState)>) {
+pub fn update_dead_zone<S: VirtualJoystickID>(mut joystick: Query<(&JoystickDeadZone, &mut VirtualJoystick<S>)>) {
     for (joystick_dead_zone, mut joystick_state) in &mut joystick {
         let dead_zone = joystick_dead_zone.0;
         if joystick_state.delta.x.abs() < dead_zone {
@@ -185,22 +185,22 @@ pub fn update_dead_zone(mut joystick: Query<(&JoystickDeadZone, &mut JoystickSta
     }
 }
 
-pub fn update_horizontal_only(mut joystick: Query<&mut JoystickState, With<JoystickHorizontalOnly>>) {
+pub fn update_horizontal_only<S: VirtualJoystickID>(mut joystick: Query<&mut VirtualJoystick<S>, With<JoystickHorizontalOnly>>) {
     for mut joystick_state in &mut joystick {
         joystick_state.knob_pos = joystick_state.base_pos + Vec2::new(joystick_state.knob_pos.x - joystick_state.base_pos.x, 0.0);
         joystick_state.delta.y = 0.0;
     }
 }
 
-pub fn update_vertical_only(mut joystick: Query<&mut JoystickState, With<JoystickVerticalOnly>>) {
+pub fn update_vertical_only<S: VirtualJoystickID>(mut joystick: Query<&mut VirtualJoystick<S>, With<JoystickVerticalOnly>>) {
     for mut joystick_state in &mut joystick {
         joystick_state.knob_pos = joystick_state.base_pos + Vec2::new(0.0, joystick_state.knob_pos.y - joystick_state.base_pos.y);
         joystick_state.delta.x = 0.0;
     }
 }
 
-pub fn update_ui(
-    joysticks: Query<(&Node, &JoystickState, &GlobalTransform, &Children)>,
+pub fn update_ui<S: VirtualJoystickID>(
+    joysticks: Query<(&Node, &VirtualJoystick<S>, &GlobalTransform, &Children)>,
     mut joystick_bases: Query<&mut Style, With<VirtualJoystickUIBackground>>,
     mut joystick_knobs: Query<(&mut Style, &Node, &GlobalTransform), With<VirtualJoystickUIKnob>>,
 ) {
