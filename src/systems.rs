@@ -126,6 +126,53 @@ pub fn update_floating(
     }
 }
 
+pub fn update_dynamic(
+    mut joystick: Query<(&Node, &GlobalTransform, &mut JoystickState), With<JoystickFloating>>,
+) {
+    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
+        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+        let joystick_rect_center = joystick_rect.center();
+        let joystick_rect_half_size = joystick_rect.half_size();
+        let base_offset: Vec2;
+        let mut assign_base_offset = false;
+        if let Some(touch_state) = &joystick_state.touch_state {
+            if touch_state.just_pressed {
+                base_offset = touch_state.start - joystick_rect.center();
+                assign_base_offset = true;
+            } else {
+                base_offset = joystick_state.base_offset;
+            }
+        } else if joystick_state.just_released {
+            base_offset = Vec2::ZERO;
+            assign_base_offset = true;
+        } else {
+            base_offset = joystick_state.base_offset;
+        }
+        if assign_base_offset {
+            joystick_state.base_offset = base_offset;
+        }
+        let new_delta: Vec2;
+        let mut new_base_offset: Option<Vec2> = None;
+        if let Some(touch_state) = &joystick_state.touch_state {
+            let mut offset = touch_state.current - (joystick_rect_center + base_offset);
+            if offset.distance_squared(joystick_rect.center()) > joystick_rect_half_size.x * joystick_rect_half_size.x {
+                let adjustment = offset * (joystick_rect_half_size.x / offset.length());
+                offset -= adjustment;
+                new_base_offset = Some(joystick_state.base_offset + adjustment);
+            }
+            let mut new_delta2 = offset / joystick_rect.half_size().clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            new_delta2.y = -new_delta2.y;
+            new_delta = new_delta2;
+        } else {
+            new_delta = Vec2::ZERO;
+        }
+        joystick_state.delta = new_delta;
+        if let Some(base_offset) = new_base_offset {
+            joystick_state.base_offset = base_offset;
+        }
+    }
+}
+
 pub fn update_dead_zone(mut joystick: Query<(&JoystickDeadZone, &mut JoystickState)>) {
     for (joystick_dead_zone, mut joystick_state) in &mut joystick {
         let dead_zone = joystick_dead_zone.0;
