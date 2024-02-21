@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickInteractionArea, VirtualJoystickNode,
+    VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode,
     VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
@@ -112,7 +112,6 @@ pub fn create_joystick<I: VirtualJoystickID>(
     let mut spawn =
         cmd.spawn(VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style));
     let spawn = spawn
-        .insert(VirtualJoystickInteractionArea)
         .with_children(|parent| {
             parent.spawn((
                 VirtualJoystickUIKnob,

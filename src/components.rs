@@ -17,7 +17,7 @@ pub struct VirtualJoystickUIBackground;
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-pub struct VirtualJoystick<S: VirtualJoystickID> {
+pub struct VirtualJoystickNode<S: VirtualJoystickID> {
     pub id: S,
     pub touch_state: Option<TouchState>,
     pub just_released: bool,

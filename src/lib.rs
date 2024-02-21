@@ -1,25 +1,23 @@
 use std::{hash::Hash, marker::PhantomData};
 
 use bevy::{
-    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath, render::RenderApp, ui::{RenderUiSystem, UiSystem}
+    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath, render::RenderApp, ui::RenderUiSystem
 };
 
 mod behaviour;
+mod bundles;
 mod components;
-mod input;
 mod systems;
-mod ui;
 mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
+pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    VirtualJoystick, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
+    VirtualJoystickNode, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
+    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 use systems::{update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
 pub use utils::create_joystick;
-
-use ui::{extract_joystick_node, VirtualJoystickData};
-
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct UpdateKnobDelta;
@@ -54,19 +52,14 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + TypePath 
 
 impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_type::<VirtualJoystickInteractionArea>()
+        app
             .register_type::<VirtualJoystickNode<S>>()
-            .register_type::<VirtualJoystick<S>>()
-            .register_type::<VirtualJoystickData>()
             .register_type::<VirtualJoystickAxis>()
             .register_type::<VirtualJoystickType>()
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_stage_before(Update, UpdateKnobDelta)
-            .add_stage_after(UpdateKnobDelta, ConstrainKnobDelta)
-            .add_state_after(ConstrainKnobDelta, FireEvents)
-            .add_systems(PreUpdate, update_input)
+            .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
                 UpdateKnobDelta,
                 (
@@ -83,7 +76,12 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                     update_vertical_only::<S>,
                 )
             )
-            .add_systems(FireEvents, update_fire_events::<S>);
+            .add_systems(FireEvents, update_fire_events::<S>)
+            .add_systems(Update, |world: &mut World| {
+                world.run_schedule(UpdateKnobDelta);
+                world.run_schedule(ConstrainKnobDelta);
+                world.run_schedule(FireEvents);
+            });
 
         let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
             return;
@@ -122,11 +120,6 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
         self.value
     }
 
-    /// Axis of Joystick see [crate::VirtualJoystickAxis]
-    pub fn direction(&self) -> VirtualJoystickAxis {
-        self.axis
-    }
-
     /// Delta value ranging from 0 to 1 in each vector (x and y)
     pub fn axis(&self) -> Vec2 {
         self.delta
@@ -142,33 +135,9 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     /// the default of the dead_zone is 0.5
     pub fn snap_axis(&self, dead_zone: Option<f32>) -> Vec2 {
         let dead_zone = dead_zone.unwrap_or(0.5);
-        let x = if self.axis == VirtualJoystickAxis::Both
-            || self.axis == VirtualJoystickAxis::Horizontal
-        {
-            if self.delta.x > dead_zone {
-                1.
-            } else if self.delta.x < -dead_zone {
-                -1.
-            } else {
-                0.
-            }
-        } else {
-            0.
-        };
-        let y = if self.axis == VirtualJoystickAxis::Both
-            || self.axis == VirtualJoystickAxis::Vertical
-        {
-            if self.delta.y > dead_zone {
-                1.
-            } else if self.delta.y < -dead_zone {
-                -1.
-            } else {
-                0.
-            }
-        } else {
-            0.
-        };
-
-        Vec2::new(x, y)
+        Vec2::new(
+            if self.delta.x < -dead_zone { -1.0 } else if self.delta.x > dead_zone { 1.0 } else { 0.0 },
+            if self.delta.y < -dead_zone { -1.0 } else if self.delta.y > dead_zone { 1.0 } else { 0.0 },
+        )
     }
 }
