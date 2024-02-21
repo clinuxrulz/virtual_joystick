@@ -1,6 +1,7 @@
 use bevy::{ecs::{event::EventWriter, query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
 
 use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickVerticalOnly, VirtualJoystickNode, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID};
+use bevy::ecs::query::Without;
 
 pub fn update_input<S: VirtualJoystickID>(
     mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>)>,
@@ -245,7 +246,7 @@ pub fn update_fire_events<S: VirtualJoystickID>(
 pub fn update_ui<S: VirtualJoystickID>(
     joysticks: Query<(&Node, &VirtualJoystickNode<S>, &GlobalTransform, &Children)>,
     mut joystick_bases: Query<&mut Style, With<VirtualJoystickUIBackground>>,
-    mut joystick_knobs: Query<(&mut Style, &Node, &GlobalTransform), With<VirtualJoystickUIKnob>>,
+    mut joystick_knobs: Query<(&mut Style, &Node, &GlobalTransform), (With<VirtualJoystickUIKnob>, Without<VirtualJoystickUIBackground>)>,
 ) {
     for (joystick_node, joystick_state, joystick_global_transform, children) in &joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
