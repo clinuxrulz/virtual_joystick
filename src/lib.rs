@@ -1,10 +1,7 @@
 use std::{hash::Hash, marker::PhantomData};
 
 use bevy::{
-    prelude::*,
-    reflect::TypePath,
-    render::RenderApp,
-    ui::{RenderUiSystem, UiSystem},
+    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath, render::RenderApp, ui::{RenderUiSystem, UiSystem}
 };
 
 mod behaviour;
@@ -15,13 +12,20 @@ mod ui;
 mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
-use input::{update_input, update_joystick, update_joystick_by_mouse, InputEvent};
 pub use components::{
     JoystickState, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
 };
+use systems::{update_dead_zone, update_dynamic, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
 pub use utils::create_joystick;
 
 use ui::{extract_joystick_node, VirtualJoystickData};
+
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct UpdateKnobDelta;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ConstrainKnobDelta;
 
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
@@ -48,50 +52,37 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_systems(PreUpdate, update_joystick.before(update_input::<S>))
+            .add_stage_before(Update, UpdateKnobDelta)
+            .add_stage_after(UpdateKnobDelta, ConstrainKnobDelta)
+            .add_systems(PreUpdate, update_input)
             .add_systems(
-                PreUpdate,
-                update_joystick_by_mouse.before(update_input::<S>),
+                UpdateKnobDelta,
+                (
+                    update_fixed,
+                    update_floating,
+                    update_dynamic,
+                )
             )
-            .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
-                PostUpdate,
-                joystick_image_node_system::<S>.before(UiSystem::Layout),
-            );
+                ConstrainKnobDelta,
+                (
+                    update_dead_zone,
+                    update_horizontal_only,
+                    update_vertical_only,
+                )
+            )
+            .add_system(UpdateUI, update_ui);
 
         let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
             return;
         };
         render_app.add_systems(
             ExtractSchedule,
-            extract_joystick_node::<S>.after(RenderUiSystem::ExtractNode),
+            update_ui.after(RenderUiSystem::ExtractNode),
         );
     }
 }
 
-fn joystick_image_node_system<S: VirtualJoystickID>(
-    interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
-    mut joystick: Query<(
-        &Transform,
-        &VirtualJoystickNode<S>,
-        &mut VirtualJoystickData,
-    )>,
-) {
-    let interaction_area = interaction_area
-        .iter()
-        .map(|(node, _)| node.size())
-        .collect::<Vec<Vec2>>();
-
-    for (i, (j_pos, data, mut knob)) in joystick.iter_mut().enumerate() {
-        let j_pos = j_pos.translation.truncate();
-        let Some(size) = interaction_area.get(i) else {
-            return;
-        };
-        let interaction_area = Rect::from_center_size(j_pos, *size);
-        knob.dead_zone = data.dead_zone;
-        knob.interactable_zone_rect = interaction_area;
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 #[reflect]

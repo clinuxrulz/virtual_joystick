@@ -198,3 +198,9 @@ pub fn update_vertical_only(mut joystick: Query<&mut JoystickState, With<Joystic
         joystick_state.delta.x = 0.0;
     }
 }
+
+pub fn update_ui(
+    mut joysticks: Query<&JoystickState, &Children>
+) {
+    
+}
