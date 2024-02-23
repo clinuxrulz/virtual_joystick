@@ -88,7 +88,7 @@ pub fn update_fixed<S: VirtualJoystickID>(
         joystick_state.base_offset = Vec2::ZERO;
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - joystick_rect.center()) / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut new_delta2 = ((touch_state.current - touch_state.start) / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
