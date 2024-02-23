@@ -28,18 +28,16 @@ pub fn update_input<S: VirtualJoystickID>(
                     break;
                 }
             }
-            if joystick_state.touch_state.is_none() {
-                if mouse_buttons.just_pressed(MouseButton::Left) {
-                    if let Some(mouse_pos) = q_windows.single().cursor_position() {
-                        if rect.contains(mouse_pos) {
-                            joystick_state.touch_state = Some(TouchState {
-                                id: 0,
-                                is_mouse: true,
-                                start: mouse_pos,
-                                current: mouse_pos,
-                                just_pressed: true,
-                            });
-                        }
+            if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left) {
+                if let Some(mouse_pos) = q_windows.single().cursor_position() {
+                    if rect.contains(mouse_pos) {
+                        joystick_state.touch_state = Some(TouchState {
+                            id: 0,
+                            is_mouse: true,
+                            start: mouse_pos,
+                            current: mouse_pos,
+                            just_pressed: true,
+                        });
                     }
                 }
             }
@@ -50,29 +48,23 @@ pub fn update_input<S: VirtualJoystickID>(
                     if mouse_buttons.just_released(MouseButton::Left) {
                         clear_touch_state = true;
                     }
-                } else {
-                    if touches.just_released(touch_state.id) {
-                        clear_touch_state = true;
-                    }
+                } else if touches.just_released(touch_state.id) {
+                    clear_touch_state = true;
                 }
             }
             if clear_touch_state {
                 joystick_state.touch_state = None;
                 joystick_state.just_released = true;
-            } else {
-                if let Some(touch_state) = &mut joystick_state.touch_state {
-                    if touch_state.is_mouse {
-                        let new_current = q_windows.single().cursor_position().unwrap();
-                        if new_current != touch_state.current {
-                            touch_state.current = new_current;
-                        }
-                    } else {
-                        if let Some(touch) = touches.get_pressed(touch_state.id) {
-                            let touch_position = touch.position();
-                            if touch_position != touch_state.current {
-                                touch_state.current = touch_position;
-                            }
-                        }
+            } else if let Some(touch_state) = &mut joystick_state.touch_state {
+                if touch_state.is_mouse {
+                    let new_current = q_windows.single().cursor_position().unwrap();
+                    if new_current != touch_state.current {
+                        touch_state.current = new_current;
+                    }
+                } else if let Some(touch) = touches.get_pressed(touch_state.id) {
+                    let touch_position = touch.position();
+                    if touch_position != touch_state.current {
+                        touch_state.current = touch_position;
                     }
                 }
             }
