@@ -259,8 +259,8 @@ pub fn update_ui<S: VirtualJoystickID>(
                 let joystick_knob_rect = joystick_knob_node.logical_rect(joystick_knob_global_transform);
                 let joystick_knob_half_size = joystick_knob_rect.half_size();
                 joystick_knob_style.position_type = PositionType::Absolute;
-                joystick_knob_style.left = Val::Px(joystick_state.base_offset.x + joystick_rect_half_size.x + (joystick_state.delta.x - 1.0) * joystick_knob_half_size.x);
-                joystick_knob_style.top = Val::Px(joystick_state.base_offset.y + joystick_rect_half_size.y + (-joystick_state.delta.y - 1.0) * joystick_knob_half_size.y);
+                joystick_knob_style.left = Val::Px(joystick_state.base_offset.x + joystick_rect_half_size.x + joystick_knob_half_size.x + (joystick_state.delta.x - 1.0) * joystick_rect_half_size.x);
+                joystick_knob_style.top = Val::Px(joystick_state.base_offset.y + joystick_rect_half_size.y + joystick_knob_half_size.y + (-joystick_state.delta.y - 1.0) * joystick_rect_half_size.y);
             }
         }
     }
