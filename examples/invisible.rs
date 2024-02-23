@@ -50,7 +50,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         Style {
-            width: Val::Percent(100.0),
+            width: Val::Percent(100.),
             height: Val::Percent(100.),
             position_type: PositionType::Absolute,
             left: Val::Percent(0.),

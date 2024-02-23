@@ -48,6 +48,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     // Spawn Virtual Joystick on left
     create_joystick(
         &mut cmd,
+        "Left Joystick".to_string(),
         asset_server.load("Knob.png"),
         asset_server.load("Horizontal_Outline_Arrows.png"),
         None,
@@ -69,6 +70,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     // Spawn Virtual Joystick on Right
     create_joystick(
         &mut cmd,
+        "Right Joystick".to_string(),
         asset_server.load("Knob.png"),
         asset_server.load("Vertical_Outline_Arrows.png"),
         None,
