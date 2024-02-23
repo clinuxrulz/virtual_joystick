@@ -1,5 +1,7 @@
 use bevy::{ecs::{component::Component, reflect::ReflectComponent}, prelude::Vec2, reflect::{std_traits::ReflectDefault, Reflect}};
+#[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::ReflectInspectorOptions;
+#[cfg(feature = "inspect")]
 use bevy_inspector_egui::InspectorOptions;
 
 use crate::VirtualJoystickID;
