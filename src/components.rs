@@ -1,4 +1,8 @@
-use bevy::{ecs::{component::Component, reflect::ReflectComponent}, prelude::Vec2, reflect::{std_traits::ReflectDefault, Reflect}};
+use bevy::{
+    ecs::{component::Component, reflect::ReflectComponent},
+    prelude::Vec2,
+    reflect::{std_traits::ReflectDefault, Reflect},
+};
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::ReflectInspectorOptions;
 #[cfg(feature = "inspect")]
@@ -17,7 +21,6 @@ pub struct VirtualJoystickUIKnob;
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct VirtualJoystickUIBackground;
-
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -65,7 +68,6 @@ pub struct JoystickInvisible;
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct JoystickFixed;
-
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]

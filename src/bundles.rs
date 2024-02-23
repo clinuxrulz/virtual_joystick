@@ -1,4 +1,10 @@
-use bevy::{ecs::bundle::Bundle, prelude::default, render::view::{InheritedVisibility, ViewVisibility, Visibility}, transform::components::{GlobalTransform, Transform}, ui::{Node, Style, ZIndex}};
+use bevy::{
+    ecs::bundle::Bundle,
+    prelude::default,
+    render::view::{InheritedVisibility, ViewVisibility, Visibility},
+    transform::components::{GlobalTransform, Transform},
+    ui::{Node, Style, ZIndex},
+};
 
 use crate::{VirtualJoystickID, VirtualJoystickNode};
 

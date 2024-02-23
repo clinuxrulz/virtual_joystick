@@ -63,7 +63,8 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         };
         let mut spawn = cmd.spawn((
-            VirtualJoystickBundle::new(VirtualJoystickNode::default()).set_style(joystick_node_style),
+            VirtualJoystickBundle::new(VirtualJoystickNode::default())
+                .set_style(joystick_node_style),
             InvisibleJoystick,
             JoystickFloating,
         ));

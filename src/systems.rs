@@ -1,6 +1,23 @@
-use bevy::{ecs::{event::EventWriter, query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}};
+use bevy::{
+    ecs::{
+        event::EventWriter,
+        query::With,
+        system::{Query, Res},
+    },
+    hierarchy::Children,
+    input::{mouse::MouseButton, touch::Touches, Input},
+    math::Vec2,
+    transform::components::GlobalTransform,
+    ui::{Node, PositionType, Style, Val},
+    window::{PrimaryWindow, Window},
+};
 
-use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode};
+use crate::{
+    components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob},
+    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
+    JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID,
+    VirtualJoystickNode,
+};
 use bevy::ecs::query::Without;
 
 pub fn update_input<S: VirtualJoystickID>(
@@ -28,7 +45,8 @@ pub fn update_input<S: VirtualJoystickID>(
                     break;
                 }
             }
-            if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left) {
+            if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left)
+            {
                 if let Some(mouse_pos) = q_windows.single().cursor_position() {
                     if rect.contains(mouse_pos) {
                         joystick_state.touch_state = Some(TouchState {
@@ -73,14 +91,19 @@ pub fn update_input<S: VirtualJoystickID>(
 }
 
 pub fn update_fixed<S: VirtualJoystickID>(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>), With<JoystickFixed>>,
+    mut joystick: Query<
+        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+        With<JoystickFixed>,
+    >,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
         joystick_state.base_offset = Vec2::ZERO;
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - touch_state.start) / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut new_delta2 = ((touch_state.current - touch_state.start)
+                / joystick_rect.half_size())
+            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
@@ -91,7 +114,10 @@ pub fn update_fixed<S: VirtualJoystickID>(
 }
 
 pub fn update_floating<S: VirtualJoystickID>(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>), With<JoystickFloating>>,
+    mut joystick: Query<
+        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+        With<JoystickFloating>,
+    >,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -115,7 +141,9 @@ pub fn update_floating<S: VirtualJoystickID>(
         }
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - (joystick_rect.center() + base_offset)) / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut new_delta2 = ((touch_state.current - (joystick_rect.center() + base_offset))
+                / joystick_rect.half_size())
+            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
@@ -126,7 +154,10 @@ pub fn update_floating<S: VirtualJoystickID>(
 }
 
 pub fn update_dynamic<S: VirtualJoystickID>(
-    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>), With<JoystickDynamic>>,
+    mut joysticks: Query<
+        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+        With<JoystickDynamic>,
+    >,
 ) {
     for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -159,7 +190,8 @@ pub fn update_dynamic<S: VirtualJoystickID>(
                 offset += adjustment;
                 new_base_offset = Some(joystick_state.base_offset + adjustment);
             }
-            let mut new_delta2 = (offset / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut new_delta2 = (offset / joystick_rect.half_size())
+                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
@@ -172,7 +204,9 @@ pub fn update_dynamic<S: VirtualJoystickID>(
     }
 }
 
-pub fn update_dead_zone<S: VirtualJoystickID>(mut joystick: Query<(&JoystickDeadZone, &mut VirtualJoystickNode<S>)>) {
+pub fn update_dead_zone<S: VirtualJoystickID>(
+    mut joystick: Query<(&JoystickDeadZone, &mut VirtualJoystickNode<S>)>,
+) {
     for (joystick_dead_zone, mut joystick_state) in &mut joystick {
         let dead_zone = joystick_dead_zone.0;
         if joystick_state.delta.x.abs() < dead_zone {
@@ -184,13 +218,17 @@ pub fn update_dead_zone<S: VirtualJoystickID>(mut joystick: Query<(&JoystickDead
     }
 }
 
-pub fn update_horizontal_only<S: VirtualJoystickID>(mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickHorizontalOnly>>) {
+pub fn update_horizontal_only<S: VirtualJoystickID>(
+    mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickHorizontalOnly>>,
+) {
     for mut joystick_state in &mut joystick {
         joystick_state.delta.y = 0.0;
     }
 }
 
-pub fn update_vertical_only<S: VirtualJoystickID>(mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickVerticalOnly>>) {
+pub fn update_vertical_only<S: VirtualJoystickID>(
+    mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickVerticalOnly>>,
+) {
     for mut joystick_state in &mut joystick {
         joystick_state.delta.x = 0.0;
     }
@@ -229,10 +267,17 @@ pub fn update_fire_events<S: VirtualJoystickID>(
     }
 }
 
+#[allow(clippy::complexity)]
 pub fn update_ui<S: VirtualJoystickID>(
     joysticks: Query<(&Node, &VirtualJoystickNode<S>, &GlobalTransform, &Children)>,
     mut joystick_bases: Query<&mut Style, With<VirtualJoystickUIBackground>>,
-    mut joystick_knobs: Query<(&mut Style, &Node, &GlobalTransform), (With<VirtualJoystickUIKnob>, Without<VirtualJoystickUIBackground>)>,
+    mut joystick_knobs: Query<
+        (&mut Style, &Node, &GlobalTransform),
+        (
+            With<VirtualJoystickUIKnob>,
+            Without<VirtualJoystickUIBackground>,
+        ),
+    >,
 ) {
     for (joystick_node, joystick_state, joystick_global_transform, children) in &joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
@@ -247,12 +292,24 @@ pub fn update_ui<S: VirtualJoystickID>(
         }
         for child in children.iter() {
             if joystick_knobs.contains(*child) {
-                let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) = joystick_knobs.get_mut(*child).unwrap();
-                let joystick_knob_rect = joystick_knob_node.logical_rect(joystick_knob_global_transform);
+                let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
+                    joystick_knobs.get_mut(*child).unwrap();
+                let joystick_knob_rect =
+                    joystick_knob_node.logical_rect(joystick_knob_global_transform);
                 let joystick_knob_half_size = joystick_knob_rect.half_size();
                 joystick_knob_style.position_type = PositionType::Absolute;
-                joystick_knob_style.left = Val::Px(joystick_state.base_offset.x + joystick_rect_half_size.x + joystick_knob_half_size.x + (joystick_state.delta.x - 1.0) * joystick_rect_half_size.x);
-                joystick_knob_style.top = Val::Px(joystick_state.base_offset.y + joystick_rect_half_size.y + joystick_knob_half_size.y + (-joystick_state.delta.y - 1.0) * joystick_rect_half_size.y);
+                joystick_knob_style.left = Val::Px(
+                    joystick_state.base_offset.x
+                        + joystick_rect_half_size.x
+                        + joystick_knob_half_size.x
+                        + (joystick_state.delta.x - 1.0) * joystick_rect_half_size.x,
+                );
+                joystick_knob_style.top = Val::Px(
+                    joystick_state.base_offset.y
+                        + joystick_rect_half_size.y
+                        + joystick_knob_half_size.y
+                        + (-joystick_state.delta.y - 1.0) * joystick_rect_half_size.y,
+                );
             }
         }
     }

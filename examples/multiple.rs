@@ -63,7 +63,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        (JoystickFixed, JoystickHorizontalOnly)
+        (JoystickFixed, JoystickHorizontalOnly),
     );
 
     // Spawn Virtual Joystick on Right
@@ -84,7 +84,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        (JoystickFixed, JoystickVerticalOnly)
+        (JoystickFixed, JoystickVerticalOnly),
     );
 }
 

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode,
-    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+    VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode, VirtualJoystickUIBackground,
+    VirtualJoystickUIKnob,
 };
 
 /// This function is a simple helper to create a joystick
@@ -110,37 +110,39 @@ pub fn create_joystick<I: VirtualJoystickID>(
     joystick_node_style: Style,
     behaviour_components: impl Bundle,
 ) {
-    let mut spawn =
-        cmd.spawn((VirtualJoystickBundle::new(VirtualJoystickNode::<I>::default().with_id(id)).set_style(joystick_node_style), behaviour_components));
-    let spawn = spawn
-        .with_children(|parent| {
-            parent.spawn((
-                VirtualJoystickUIKnob,
-                ImageBundle {
-                    image: knob_img.into(),
-                    style: Style {
-                        width: Val::Px(knob_size.x),
-                        height: Val::Px(knob_size.y),
-                        ..default()
-                    },
-                    background_color: knob_color.unwrap_or(Color::WHITE).into(),
+    let mut spawn = cmd.spawn((
+        VirtualJoystickBundle::new(VirtualJoystickNode::<I>::default().with_id(id))
+            .set_style(joystick_node_style),
+        behaviour_components,
+    ));
+    let spawn = spawn.with_children(|parent| {
+        parent.spawn((
+            VirtualJoystickUIKnob,
+            ImageBundle {
+                image: knob_img.into(),
+                style: Style {
+                    width: Val::Px(knob_size.x),
+                    height: Val::Px(knob_size.y),
                     ..default()
                 },
-            ));
-            parent.spawn((
-                VirtualJoystickUIBackground,
-                ImageBundle {
-                    image: background_img.into(),
-                    style: Style {
-                        width: Val::Px(background_size.x),
-                        height: Val::Px(background_size.y),
-                        ..default()
-                    },
-                    background_color: background_color.unwrap_or(Color::WHITE).into(),
+                background_color: knob_color.unwrap_or(Color::WHITE).into(),
+                ..default()
+            },
+        ));
+        parent.spawn((
+            VirtualJoystickUIBackground,
+            ImageBundle {
+                image: background_img.into(),
+                style: Style {
+                    width: Val::Px(background_size.x),
+                    height: Val::Px(background_size.y),
                     ..default()
                 },
-            ));
-        });
+                background_color: background_color.unwrap_or(Color::WHITE).into(),
+                ..default()
+            },
+        ));
+    });
 
     if let Some(c) = interactable_area_color {
         spawn.insert(BackgroundColor(c));

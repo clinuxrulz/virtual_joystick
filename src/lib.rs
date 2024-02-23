@@ -1,8 +1,6 @@
 use std::{hash::Hash, marker::PhantomData};
 
-use bevy::{
-    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath,
-};
+use bevy::{ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath};
 
 mod bundles;
 mod components;
@@ -11,10 +9,14 @@ mod utils;
 
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    VirtualJoystickNode, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic,
-    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
+    JoystickInvisible, JoystickVerticalOnly, VirtualJoystickNode, VirtualJoystickUIBackground,
+    VirtualJoystickUIKnob,
 };
-use systems::{update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_ui, update_vertical_only};
+use systems::{
+    update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating,
+    update_horizontal_only, update_input, update_ui, update_vertical_only,
+};
 pub use utils::create_joystick;
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
@@ -53,19 +55,14 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + TypePath 
 
 impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app
-            .register_type::<VirtualJoystickNode<S>>()
+        app.register_type::<VirtualJoystickNode<S>>()
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
             .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
                 UpdateKnobDelta,
-                (
-                    update_fixed::<S>,
-                    update_floating::<S>,
-                    update_dynamic::<S>,
-                )
+                (update_fixed::<S>, update_floating::<S>, update_dynamic::<S>),
             )
             .add_systems(
                 ConstrainKnobDelta,
@@ -73,7 +70,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                     update_dead_zone::<S>,
                     update_horizontal_only::<S>,
                     update_vertical_only::<S>,
-                )
+                ),
             )
             .add_systems(FireEvents, update_fire_events::<S>)
             .add_systems(UpdateUI, update_ui::<S>)
@@ -85,7 +82,6 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             });
     }
 }
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 #[reflect]
@@ -129,8 +125,20 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     pub fn snap_axis(&self, dead_zone: Option<f32>) -> Vec2 {
         let dead_zone = dead_zone.unwrap_or(0.5);
         Vec2::new(
-            if self.delta.x < -dead_zone { -1.0 } else if self.delta.x > dead_zone { 1.0 } else { 0.0 },
-            if self.delta.y < -dead_zone { -1.0 } else if self.delta.y > dead_zone { 1.0 } else { 0.0 },
+            if self.delta.x < -dead_zone {
+                -1.0
+            } else if self.delta.x > dead_zone {
+                1.0
+            } else {
+                0.0
+            },
+            if self.delta.y < -dead_zone {
+                -1.0
+            } else if self.delta.y > dead_zone {
+                1.0
+            } else {
+                0.0
+            },
         )
     }
 }
