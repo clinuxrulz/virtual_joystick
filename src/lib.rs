@@ -83,12 +83,6 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                 world.run_schedule(FireEvents);
                 world.run_schedule(UpdateUI);
             });
-
-            /*
-        let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
-            return;
-        };
-        render_app.add_systems(PositionUI, update_ui::<S>);*/
     }
 }
 
