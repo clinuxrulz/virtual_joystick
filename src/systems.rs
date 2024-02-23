@@ -134,9 +134,9 @@ pub fn update_floating<S: VirtualJoystickID>(
 }
 
 pub fn update_dynamic<S: VirtualJoystickID>(
-    mut joystick: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>), With<JoystickDynamic>>,
+    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>), With<JoystickDynamic>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
+    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
         let joystick_rect_center = joystick_rect.center();
         let joystick_rect_half_size = joystick_rect.half_size();
@@ -162,12 +162,12 @@ pub fn update_dynamic<S: VirtualJoystickID>(
         let mut new_base_offset: Option<Vec2> = None;
         if let Some(touch_state) = &joystick_state.touch_state {
             let mut offset = touch_state.current - (joystick_rect_center + base_offset);
-            if offset.distance_squared(joystick_rect.center()) > joystick_rect_half_size.x * joystick_rect_half_size.x {
-                let adjustment = offset * (joystick_rect_half_size.x / offset.length());
-                offset -= adjustment;
+            if offset.length_squared() > joystick_rect_half_size.x * joystick_rect_half_size.x {
+                let adjustment = offset - offset * (joystick_rect_half_size.x / offset.length());
+                offset += adjustment;
                 new_base_offset = Some(joystick_state.base_offset + adjustment);
             }
-            let mut new_delta2 = offset / joystick_rect.half_size().clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut new_delta2 = (offset / joystick_rect.half_size()).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
