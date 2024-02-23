@@ -1,7 +1,7 @@
 use std::{hash::Hash, marker::PhantomData};
 
 use bevy::{
-    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath, render::RenderApp, ui::RenderUiSystem
+    ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath,
 };
 
 mod bundles;
