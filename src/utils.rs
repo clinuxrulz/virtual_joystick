@@ -121,6 +121,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
             ImageBundle {
                 image: knob_img.into(),
                 style: Style {
+                    position_type: PositionType::Absolute,
                     width: Val::Px(knob_size.x),
                     height: Val::Px(knob_size.y),
                     ..default()
@@ -134,6 +135,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
             ImageBundle {
                 image: background_img.into(),
                 style: Style {
+                    position_type: PositionType::Absolute,
                     width: Val::Px(background_size.x),
                     height: Val::Px(background_size.y),
                     ..default()
