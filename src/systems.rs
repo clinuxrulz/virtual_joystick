@@ -3,7 +3,7 @@ use bevy::{
         event::EventWriter,
         query::With,
         system::{Query, Res},
-    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, render::view::Visibility, transform::components::GlobalTransform, ui::{BackgroundColor, Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
+    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, render::view::Visibility, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
 };
 
 use crate::{
