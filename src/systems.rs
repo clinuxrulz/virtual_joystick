@@ -179,19 +179,32 @@ pub fn update_floating<S: VirtualJoystickID>(
 
 pub fn update_dynamic<S: VirtualJoystickID>(
     mut joysticks: Query<
-        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>, &Children),
         With<JoystickDynamic>,
     >,
+    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
+    for (joystick_node, joystick_global_transform, mut joystick_state, children) in &mut joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
-        let joystick_rect_center = joystick_rect.center();
-        let joystick_rect_half_size = joystick_rect.half_size();
+        let mut joystick_base_rect: Option<Rect> = None;
+        for &child in children.iter() {
+            if joystick_bases.contains(child) {
+                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
+                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+                break;
+            }
+        }
+        if joystick_base_rect.is_none() {
+            continue;
+        }
+        let joystick_base_rect = joystick_base_rect.unwrap();
+        let joystick_base_rect_center = joystick_base_rect.center();
+        let joystick_base_rect_half_size = joystick_base_rect.half_size();
         let base_offset: Vec2;
         let mut assign_base_offset = false;
         if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_rect.center();
+                base_offset = touch_state.start - joystick_base_rect_center;
                 assign_base_offset = true;
             } else {
                 base_offset = joystick_state.base_offset;
@@ -208,13 +221,13 @@ pub fn update_dynamic<S: VirtualJoystickID>(
         let new_delta: Vec2;
         let mut new_base_offset: Option<Vec2> = None;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut offset = touch_state.current - (joystick_rect_center + base_offset);
-            if offset.length_squared() > joystick_rect_half_size.x * joystick_rect_half_size.x {
-                let adjustment = offset - offset * (joystick_rect_half_size.x / offset.length());
+            let mut offset = touch_state.current - (joystick_rect.min + base_offset + joystick_base_rect.half_size());
+            if offset.length_squared() > joystick_base_rect_half_size.x * joystick_base_rect_half_size.x {
+                let adjustment = offset - offset * (joystick_base_rect_half_size.x / offset.length());
                 offset += adjustment;
-                new_base_offset = Some(joystick_state.base_offset + adjustment);
+                new_base_offset = Some(base_offset + adjustment);
             }
-            let mut new_delta2 = (offset / joystick_rect.half_size())
+            let mut new_delta2 = (offset / joystick_base_rect_half_size)
                 .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
