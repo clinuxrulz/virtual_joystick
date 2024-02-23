@@ -14,8 +14,7 @@ pub use components::{
     VirtualJoystickUIKnob,
 };
 use systems::{
-    update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating,
-    update_horizontal_only, update_input, update_ui, update_vertical_only,
+    update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_joystick_visible, update_ui, update_vertical_only
 };
 pub use utils::create_joystick;
 
@@ -73,7 +72,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                 ),
             )
             .add_systems(FireEvents, update_fire_events::<S>)
-            .add_systems(UpdateUI, update_ui::<S>)
+            .add_systems(UpdateUI, (update_joystick_visible::<S>, update_ui::<S>))
             .add_systems(Update, |world: &mut World| {
                 world.run_schedule(UpdateKnobDelta);
                 world.run_schedule(ConstrainKnobDelta);

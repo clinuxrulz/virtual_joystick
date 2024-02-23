@@ -3,20 +3,11 @@ use bevy::{
         event::EventWriter,
         query::With,
         system::{Query, Res},
-    },
-    hierarchy::Children,
-    input::{mouse::MouseButton, touch::Touches, Input},
-    math::{Rect, Vec2},
-    transform::components::GlobalTransform,
-    ui::{Node, PositionType, Style, Val},
-    window::{PrimaryWindow, Window},
+    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, render::view::Visibility, transform::components::GlobalTransform, ui::{BackgroundColor, Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
 };
 
 use crate::{
-    components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob},
-    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
-    JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID,
-    VirtualJoystickNode,
+    components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickInvisible, JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode
 };
 use bevy::ecs::query::Without;
 
@@ -300,6 +291,21 @@ pub fn update_fire_events<S: VirtualJoystickID>(
                 value: touch_state.current,
                 delta: joystick.delta,
             });
+        }
+    }
+}
+
+pub fn update_joystick_visible<S: VirtualJoystickID>(
+    mut joysticks: Query<(&mut Visibility, &VirtualJoystickNode<S>), With<JoystickInvisible>>,
+) {
+    for (mut joystick_visibility, joystick_state) in &mut joysticks {
+        if joystick_state.just_released || *joystick_visibility != Visibility::Hidden && joystick_state.touch_state.is_none() {
+            *joystick_visibility = Visibility::Hidden;
+        }
+        if let Some(touch_state) = &joystick_state.touch_state {
+            if touch_state.just_pressed {
+                *joystick_visibility = Visibility::Inherited;
+            }
         }
     }
 }
