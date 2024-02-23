@@ -1,4 +1,4 @@
-use bevy::{ecs::{event::EventWriter, query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, Style, Val}, window::{PrimaryWindow, Window}};
+use bevy::{ecs::{event::EventWriter, query::With, system::{Query, Res}}, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::Vec2, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}};
 
 use crate::{components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode};
 use bevy::ecs::query::Without;
@@ -250,11 +250,13 @@ pub fn update_ui<S: VirtualJoystickID>(
 ) {
     for (joystick_node, joystick_state, joystick_global_transform, children) in &joysticks {
         let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+        let joystick_rect_half_size = joystick_rect.half_size();
         for child in children.iter() {
             if joystick_bases.contains(*child) {
                 let mut joystick_base = joystick_bases.get_mut(*child).unwrap();
-                joystick_base.left = Val::Px(joystick_rect.min.x + joystick_state.base_offset.x);
-                joystick_base.top = Val::Px(joystick_rect.min.y + joystick_state.base_offset.y);
+                joystick_base.position_type = PositionType::Absolute;
+                joystick_base.left = Val::Px(joystick_state.base_offset.x);
+                joystick_base.top = Val::Px(joystick_state.base_offset.y);
             }
         }
         for child in children.iter() {
@@ -262,12 +264,9 @@ pub fn update_ui<S: VirtualJoystickID>(
                 let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) = joystick_knobs.get_mut(*child).unwrap();
                 let joystick_knob_rect = joystick_knob_node.logical_rect(joystick_knob_global_transform);
                 let joystick_knob_half_size = joystick_knob_rect.half_size();
-                joystick_knob_style.left = Val::Px(
-                    joystick_rect.center().x + (joystick_state.delta.x - 1.0) * joystick_knob_half_size.x
-                );
-                joystick_knob_style.top = Val::Px(
-                    joystick_rect.center().y + (-joystick_state.delta.y - 1.0) * joystick_knob_half_size.y
-                );
+                joystick_knob_style.position_type = PositionType::Absolute;
+                joystick_knob_style.left = Val::Px(joystick_state.base_offset.x + joystick_rect_half_size.x + (joystick_state.delta.x - 1.0) * joystick_knob_half_size.x);
+                joystick_knob_style.top = Val::Px(joystick_state.base_offset.y + joystick_rect_half_size.y + (-joystick_state.delta.y - 1.0) * joystick_knob_half_size.y);
             }
         }
     }

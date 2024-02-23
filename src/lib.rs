@@ -26,6 +26,9 @@ pub struct ConstrainKnobDelta;
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FireEvents;
 
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PositionUI;
+
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
@@ -73,19 +76,19 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                 )
             )
             .add_systems(FireEvents, update_fire_events::<S>)
+            .add_systems(PositionUI, update_ui::<S>)
             .add_systems(Update, |world: &mut World| {
                 world.run_schedule(UpdateKnobDelta);
                 world.run_schedule(ConstrainKnobDelta);
                 world.run_schedule(FireEvents);
+                world.run_schedule(PositionUI);
             });
 
+            /*
         let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
             return;
         };
-        render_app.add_systems(
-            ExtractSchedule,
-            update_ui::<S>.after(RenderUiSystem::ExtractNode),
-        );
+        render_app.add_systems(PositionUI, update_ui::<S>);*/
     }
 }
 
