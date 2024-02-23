@@ -6,7 +6,7 @@ use bevy::{
     },
     hierarchy::Children,
     input::{mouse::MouseButton, touch::Touches, Input},
-    math::Vec2,
+    math::{Rect, Vec2},
     transform::components::GlobalTransform,
     ui::{Node, PositionType, Style, Val},
     window::{PrimaryWindow, Window},
@@ -91,18 +91,30 @@ pub fn update_input<S: VirtualJoystickID>(
 }
 
 pub fn update_fixed<S: VirtualJoystickID>(
-    mut joystick: Query<
-        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+    mut joysticks: Query<
+        (&mut VirtualJoystickNode<S>, &Children),
         With<JoystickFixed>,
     >,
+    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
-        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+    for (mut joystick_state, children) in &mut joysticks {
+        let mut joystick_base_rect: Option<Rect> = None;
+        for &child in children.iter() {
+            if joystick_bases.contains(child) {
+                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
+                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+                break;
+            }
+        }
+        if joystick_base_rect.is_none() {
+            continue;
+        }
+        let joystick_base_rect = joystick_base_rect.unwrap();
         joystick_state.base_offset = Vec2::ZERO;
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
             let mut new_delta2 = ((touch_state.current - touch_state.start)
-                / joystick_rect.half_size())
+                / joystick_base_rect.half_size())
             .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
@@ -115,17 +127,29 @@ pub fn update_fixed<S: VirtualJoystickID>(
 
 pub fn update_floating<S: VirtualJoystickID>(
     mut joystick: Query<
-        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>),
+        (&mut VirtualJoystickNode<S>, &Children),
         With<JoystickFloating>,
     >,
+    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joystick {
-        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+    for (mut joystick_state, children) in &mut joystick {
+        let mut joystick_base_rect: Option<Rect> = None;
+        for &child in children.iter() {
+            if joystick_bases.contains(child) {
+                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
+                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+                break;
+            }
+        }
+        if joystick_base_rect.is_none() {
+            continue;
+        }
+        let joystick_base_rect = joystick_base_rect.unwrap();
         let base_offset: Vec2;
         let mut assign_base_offset = false;
         if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_rect.center();
+                base_offset = touch_state.start - joystick_base_rect.center();
                 assign_base_offset = true;
             } else {
                 base_offset = joystick_state.base_offset;
@@ -141,8 +165,8 @@ pub fn update_floating<S: VirtualJoystickID>(
         }
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - (joystick_rect.center() + base_offset))
-                / joystick_rect.half_size())
+            let mut new_delta2 = ((touch_state.current - touch_state.start)
+                / joystick_base_rect.half_size())
             .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
@@ -269,8 +293,8 @@ pub fn update_fire_events<S: VirtualJoystickID>(
 
 #[allow(clippy::complexity)]
 pub fn update_ui<S: VirtualJoystickID>(
-    joysticks: Query<(&Node, &VirtualJoystickNode<S>, &GlobalTransform, &Children)>,
-    mut joystick_bases: Query<&mut Style, With<VirtualJoystickUIBackground>>,
+    joysticks: Query<(&VirtualJoystickNode<S>, &Children)>,
+    mut joystick_bases: Query<(&mut Style, &Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
     mut joystick_knobs: Query<
         (&mut Style, &Node, &GlobalTransform),
         (
@@ -279,17 +303,22 @@ pub fn update_ui<S: VirtualJoystickID>(
         ),
     >,
 ) {
-    for (joystick_node, joystick_state, joystick_global_transform, children) in &joysticks {
-        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
-        let joystick_rect_half_size = joystick_rect.half_size();
+    for (joystick_state,  children) in &joysticks {
+        let mut joystick_base_rect: Option<Rect> = None;
         for child in children.iter() {
             if joystick_bases.contains(*child) {
-                let mut joystick_base = joystick_bases.get_mut(*child).unwrap();
-                joystick_base.position_type = PositionType::Absolute;
-                joystick_base.left = Val::Px(joystick_state.base_offset.x);
-                joystick_base.top = Val::Px(joystick_state.base_offset.y);
+                let (mut joystick_base_style, joystick_base_node, joystick_base_global_transform) = joystick_bases.get_mut(*child).unwrap();
+                joystick_base_style.position_type = PositionType::Absolute;
+                joystick_base_style.left = Val::Px(joystick_state.base_offset.x);
+                joystick_base_style.top = Val::Px(joystick_state.base_offset.y);
+                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
             }
         }
+        if joystick_base_rect.is_none() {
+            continue;
+        }
+        let joystick_base_rect = joystick_base_rect.unwrap();
+        let joystick_base_rect_half_size = joystick_base_rect.half_size();
         for child in children.iter() {
             if joystick_knobs.contains(*child) {
                 let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
@@ -300,15 +329,15 @@ pub fn update_ui<S: VirtualJoystickID>(
                 joystick_knob_style.position_type = PositionType::Absolute;
                 joystick_knob_style.left = Val::Px(
                     joystick_state.base_offset.x
-                        + joystick_rect_half_size.x
+                        + joystick_base_rect_half_size.x
                         + joystick_knob_half_size.x
-                        + (joystick_state.delta.x - 1.0) * joystick_rect_half_size.x,
+                        + (joystick_state.delta.x - 1.0) * joystick_base_rect_half_size.x,
                 );
                 joystick_knob_style.top = Val::Px(
                     joystick_state.base_offset.y
-                        + joystick_rect_half_size.y
+                        + joystick_base_rect_half_size.y
                         + joystick_knob_half_size.y
-                        + (-joystick_state.delta.y - 1.0) * joystick_rect_half_size.y,
+                        + (-joystick_state.delta.y - 1.0) * joystick_base_rect_half_size.y,
                 );
             }
         }
